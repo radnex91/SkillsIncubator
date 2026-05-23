@@ -3,285 +3,938 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Incubateur de Skills | Compétences </title>
+<title>SkillsIncubator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
   :root {
-    --bg: #0f0f13;
-    --surface: #1a1a24;
-    --surface2: #22222e;
-    --border: #2a2a3a;
-    --text: #e4e4ec;
-    --text2: #9090a8;
-    --primary: #6366f1;
-    --primary-glow: rgba(99,102,241,0.25);
+    --bg: #08080e;
+    --surface: rgba(255,255,255,.04);
+    --surface-hover: rgba(255,255,255,.08);
+    --surface-modal: rgba(18,18,30,.96);
+    --border: rgba(255,255,255,.08);
+    --border-hover: rgba(255,255,255,.16);
+    --text: #f1f1f7;
+    --text-2: rgba(255,255,255,.45);
+    --text-3: rgba(255,255,255,.25);
+    --primary: #7c6af0;
+    --primary-light: #a78bfa;
+    --primary-glow: rgba(124,106,240,.3);
     --green: #22c55e;
     --yellow: #eab308;
     --orange: #f97316;
     --red: #ef4444;
-    --radius: 10px;
+    --pink: #ec4899;
+    --cyan: #06b6d4;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    overflow-x: hidden;
   }
-  ::-webkit-scrollbar { width: 6px; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(124,106,240,.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(168,85,247,.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6,182,212,.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
-  .app { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
 
-  /* Header */
   .header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 32px; padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
   }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--pink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    box-shadow: 0 0 30px var(--primary-glow);
+    flex-shrink: 0;
+  }
+
   .header h1 {
-    font-size: 24px; font-weight: 700;
-    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+    background: linear-gradient(135deg, #f1f1f7 0%, rgba(255,255,255,.6) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .header h1 small {
-    font-size: 14px; font-weight: 400;
-    -webkit-text-fill-color: var(--text2);
-    background: none; margin-left: 8px;
-  }
-  .header-actions { display: flex; gap: 8px; align-items: center; }
 
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: .5px;
+  .header h1 span {
+    -webkit-text-fill-color: var(--text-2);
+    font-weight: 500;
+    font-size: 14px;
+    margin-left: 6px;
   }
-  .badge-idea { background: #6366f120; color: #818cf8; }
-  .badge-incubating { background: #f9731620; color: #fb923c; }
-  .badge-active { background: #22c55e20; color: #4ade80; }
-  .badge-refining { background: #eab30820; color: #facc15; }
-  .badge-retired { background: #ef444420; color: #f87171; }
 
-  /* Filters */
-  .filters {
-    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
-  .filter-btn {
-    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--text2); cursor: pointer;
-    font-size: 13px; transition: .2s;
-  }
-  .filter-btn:hover { border-color: var(--primary); color: var(--text); }
-  .filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-  /* Stats */
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px; margin-bottom: 24px;
-  }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px 16px; text-align: center;
-  }
-  .stat-card .num { font-size: 22px; font-weight: 700; }
-  .stat-card .label { font-size: 12px; color: var(--text2); margin-top: 2px; }
-
-  /* Button */
   .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: 8px; border: none;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: .2s; white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
   }
-  .btn-primary { background: var(--primary); color: #fff; }
-  .btn-primary:hover { background: #4f46e5; box-shadow: 0 0 20px var(--primary-glow); }
-  .btn-sm { padding: 5px 10px; font-size: 12px; }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
-  .btn-danger { background: var(--red); color: #fff; }
-  .btn-danger:hover { background: #dc2626; }
-  .btn-green { background: var(--green); color: #000; }
-  .btn-green:hover { background: #16a34a; }
 
-  /* Grid */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    color: #fff;
+    box-shadow: 0 0 20px var(--primary-glow);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 35px var(--primary-glow);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .btn-danger {
+    background: rgba(239,68,68,.15);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,.2);
+  }
+  .btn-danger:hover {
+    background: rgba(239,68,68,.25);
+    transform: translateY(-1px);
+  }
+
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition: .3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: .4;
+  }
+
+  .stat-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+
+  .stat-card .num {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    background: linear-gradient(135deg, var(--text), rgba(255,255,255,.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 3px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+
+  .filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all .25s;
+    backdrop-filter: blur(8px);
+  }
+
+  .filter-btn:hover {
+    border-color: var(--primary);
+    color: var(--text);
+    background: rgba(124,106,240,.08);
+  }
+
+  .filter-btn.active {
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 20px var(--primary-glow);
+  }
+
+  .filter-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+
   .skills-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 14px;
   }
 
   .skill-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px;
-    cursor: pointer; transition: .25s; position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all .35s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
   }
+
+  .skill-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,106,240,.3), transparent);
+    opacity: 0;
+    transition: opacity .35s;
+  }
+
   .skill-card:hover {
-    border-color: var(--primary); transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,0,0,.3);
+    border-color: rgba(124,106,240,.3);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 50px rgba(0,0,0,.4), 0 0 30px rgba(124,106,240,.05);
   }
-  .skill-card .top {
-    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+
+  .skill-card:hover::before { opacity: 1; }
+
+  .skill-card .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
   }
-  .skill-card h3 { font-size: 16px; font-weight: 600; }
+
+  .skill-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.2px;
+    line-height: 1.3;
+  }
+
   .skill-card .desc {
-    font-size: 13px; color: var(--text2); line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 12px;
   }
+
   .skill-card .meta {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    font-size: 12px; color: var(--text2);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-2);
   }
+
+  .skill-card .cat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
   .skill-card .cat-dot {
-    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
   }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-idea { background: rgba(124,106,240,.15); color: var(--primary-light); border: 1px solid rgba(124,106,240,.2); }
+  .badge-incubating { background: rgba(249,115,22,.15); color: #fb923c; border: 1px solid rgba(249,115,22,.2); }
+  .badge-active { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.2); }
+  .badge-refining { background: rgba(234,179,8,.15); color: #facc15; border: 1px solid rgba(234,179,8,.2); }
+  .badge-retired { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.2); }
+  .badge-terminer { background: rgba(34,197,94,.25); color: #86efac; border: 1px solid rgba(34,197,94,.35); }
+
+  .progress-wrap {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .progress-bar {
-    height: 4px; background: var(--border); border-radius: 4px;
-    margin-top: 12px; overflow: hidden;
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
   }
+
   .progress-bar .fill {
-    height: 100%; border-radius: 4px;
-    background: linear-gradient(90deg, var(--primary), #a78bfa);
-    transition: width .5s;
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--pink));
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+    transition: width .8s cubic-bezier(.4,0,.2,1);
   }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .progress-pct {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+    min-width: 30px;
+    text-align: right;
+  }
+
   .skill-card .card-actions {
-    position: absolute; top: 12px; right: 12px; display: none; gap: 4px;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: all .25s;
   }
-  .skill-card:hover .card-actions { display: flex; }
 
-  /* Modal */
+  .skill-card:hover .card-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 1000;
-    background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
-    align-items: center; justify-content: center;
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(16px);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn .2s;
   }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 14px; width: 90%; max-width: 620px;
-    max-height: 90vh; overflow-y: auto; padding: 28px;
-  }
-  .modal h2 { font-size: 20px; margin-bottom: 20px; }
-  .modal .close {
-    float: right; background: none; border: none; color: var(--text2);
-    font-size: 24px; cursor: pointer;
-  }
-  .modal .close:hover { color: var(--text); }
 
-  .form-group { margin-bottom: 16px; }
-  .form-group label {
-    display: block; font-size: 13px; font-weight: 600;
-    margin-bottom: 5px; color: var(--text2);
+  .modal-overlay.open { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%; padding: 10px 12px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--bg);
-    color: var(--text); font-size: 14px; font-family: inherit;
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal {
+    background: var(--surface-modal);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 92%;
+    max-width: 640px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 32px;
+    animation: scaleIn .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 25px 80px rgba(0,0,0,.6);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .modal-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: .2s;
   }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    outline: none; border-color: var(--primary);
+
+  .modal-close:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--border-hover);
+  }
+
+  .form-group { margin-bottom: 18px; }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-2);
+    letter-spacing: .2px;
+    text-transform: uppercase;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.3);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: all .2s;
+    outline: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
   }
+
   .form-group textarea { resize: vertical; min-height: 70px; }
-  .form-row { display: flex; gap: 12px; }
+
+  .form-row {
+    display: flex;
+    gap: 14px;
+  }
+
   .form-row > * { flex: 1; }
 
   .form-actions {
-    display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
   }
-
-  /* Detail panel */
-  .detail-section { margin-bottom: 24px; }
-  .detail-section h3 {
-    font-size: 14px; font-weight: 600; color: var(--text2);
-    text-transform: uppercase; letter-spacing: .5px;
-    margin-bottom: 10px; padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-  }
-  .detail-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-  }
-  .detail-header h2 { margin-bottom: 0; font-size: 22px; }
-
-  .milestone-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 0; border-bottom: 1px solid var(--border);
-  }
-  .milestone-item:last-child { border: none; }
-  .milestone-item .check {
-    width: 18px; height: 18px; border-radius: 4px;
-    border: 2px solid var(--border); cursor: pointer; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: .2s; background: transparent;
-  }
-  .milestone-item .check.done {
-    background: var(--green); border-color: var(--green);
-  }
-  .milestone-item .check.done::after { content: '✓'; color: #000; font-size: 12px; font-weight: 700; }
-  .milestone-item .text { font-size: 14px; flex: 1; }
-  .milestone-item .text.done { text-decoration: line-through; color: var(--text2); }
-  .milestone-item .del-milestone {
-    background: none; border: none; color: var(--text2); cursor: pointer;
-    font-size: 16px; opacity: 0; transition: .2s;
-  }
-  .milestone-item:hover .del-milestone { opacity: 1; }
-  .milestone-input {
-    display: flex; gap: 6px; margin-top: 8px;
-  }
-  .milestone-input input {
-    flex: 1; padding: 8px 10px; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--bg);
-    color: var(--text); font-size: 13px;
-  }
-  .milestone-input input:focus { outline: none; border-color: var(--primary); }
-
-  .log-item {
-    padding: 8px 0; border-bottom: 1px solid var(--border);
-    font-size: 13px; line-height: 1.5;
-  }
-  .log-item:last-child { border: none; }
-  .log-item .time { font-size: 11px; color: var(--text2); }
-  .log-input {
-    display: flex; gap: 6px; margin-top: 8px;
-  }
-  .log-input input {
-    flex: 1; padding: 8px 10px; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--bg);
-    color: var(--text); font-size: 13px;
-  }
-  .log-input input:focus { outline: none; border-color: var(--primary); }
-
-  .empty-state {
-    text-align: center; padding: 60px 20px; color: var(--text2);
-  }
-  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .3; }
-  .empty-state h3 { font-size: 18px; margin-bottom: 6px; color: var(--text); }
 
   .color-picker {
-    display: flex; gap: 6px; flex-wrap: wrap;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
+
   .color-picker .c {
-    width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; transition: .15s;
-  }
-  .color-picker .c:hover { transform: scale(1.15); }
-  .color-picker .c.active { border-color: #fff; }
-
-  .category-tag {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 4px; font-size: 11px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all .2s;
   }
 
-  @media (max-width: 600px) {
+  .color-picker .c:hover { transform: scale(1.2); }
+  .color-picker .c.active { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,.2); }
+
+  .detail-section { margin-bottom: 28px; }
+
+  .detail-section h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .detail-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+  }
+
+  .detail-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+
+  .detail-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .detail-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 16px;
+  }
+
+  .detail-notes {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-2);
+    padding: 14px 16px;
+    background: rgba(0,0,0,.2);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    border-left: 3px solid var(--primary);
+  }
+
+  .detail-repo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(124,106,240,.1);
+    border: 1px solid rgba(124,106,240,.15);
+    color: var(--primary-light);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: .2s;
+  }
+
+  .detail-repo:hover {
+    background: rgba(124,106,240,.2);
+  }
+
+  .milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .milestone-item:last-child { border: none; }
+
+  .milestone-item .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    background: transparent;
+  }
+
+  .milestone-item .check:hover { border-color: var(--green); }
+
+  .milestone-item .check.done {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 10px rgba(34,197,94,.3);
+  }
+
+  .milestone-item .check.done::after {
+    content: '✓';
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .milestone-item .text {
+    font-size: 14px;
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .milestone-item .text.done {
+    text-decoration: line-through;
+    color: var(--text-2);
+  }
+
+  .milestone-item .del-milestone {
+    background: none;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: .2s;
+  }
+
+  .milestone-item:hover .del-milestone { opacity: 1; }
+  .milestone-item .del-milestone:hover { color: var(--red); }
+
+  .milestone-input, .log-input {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .milestone-input input, .log-input input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: .2s;
+  }
+
+  .milestone-input input:focus, .log-input input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+
+  .log-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .log-item:last-child { border: none; }
+  .log-item .time {
+    font-size: 11px;
+    color: var(--text-3);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .empty-state .icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    opacity: .15;
+    display: block;
+  }
+
+  .empty-state h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .empty-state p {
+    color: var(--text-2);
+    font-size: 14px;
+    max-width: 300px;
+    margin: 0 auto 20px;
+    line-height: 1.6;
+  }
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .category-item:last-child { border: none; }
+
+  .category-item .name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: var(--surface-modal);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .4s cubic-bezier(.4,0,.2,1);
+    z-index: 2000;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .search-input {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .search-input input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.3);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: .2s;
+  }
+  .search-input input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+  .search-input svg {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-3);
+    pointer-events: none;
+  }
+
+  .cat-form-card {
+    background: rgba(124,106,240,.06);
+    border: 1px solid rgba(124,106,240,.15);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+    transition: .3s;
+  }
+
+  .cat-form-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-2);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+  }
+
+  .cat-form-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(124,106,240,.1);
+  }
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    transition: all .2s;
+    border-radius: 8px;
+    margin: 0 -8px;
+    padding: 10px 12px;
+  }
+  .category-item:last-child { border: none; }
+  .category-item:hover {
+    background: var(--surface);
+  }
+
+  .category-item .name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .cat-count {
+    font-size: 11px;
+    color: var(--text-3);
+    font-weight: 500;
+    background: var(--surface);
+    padding: 2px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .cat-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .category-item:hover .cat-actions { opacity: 1; }
+
+  @media (max-width: 640px) {
     .app { padding: 16px 12px; }
     .skills-grid { grid-template-columns: 1fr; }
     .form-row { flex-direction: column; }
-    .header { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .header-actions { width: 100%; }
-    .header-actions .btn { flex: 1; justify-content: center; }
+    .header { flex-direction: column; align-items: stretch; gap: 14px; }
+    .header-left { justify-content: center; }
+    .header-actions { justify-content: center; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .modal { padding: 20px; width: 96%; }
   }
 </style>
 </head>
@@ -289,48 +942,59 @@
 
 <div class="app" id="app">
   <div class="header">
-    <h1>Incubateur <small>de Skills | Compétences</small></h1>
+    <div class="header-left">
+      <div class="logo">✦</div>
+      <h1>SkillsIncubator <span>— incuber & maîtriser</span></h1>
+    </div>
     <div class="header-actions">
-      <button class="btn btn-ghost" onclick="openCatModal()">Catégories</button>
-      <button class="btn btn-primary" onclick="openSkillModal()">+ Nouveau Skill</button>
+      <button class="btn btn-ghost" onclick="openCatModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Catégories
+      </button>
+      <button class="btn btn-primary" onclick="openSkillModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouveau Skill
+      </button>
     </div>
   </div>
 
   <div class="stats" id="stats"></div>
-
   <div class="filters" id="filters"></div>
-
   <div id="skillsContainer"></div>
 </div>
 
-<!-- Skill Modal -->
 <div class="modal-overlay" id="skillModal">
   <div class="modal">
-    <button class="close" onclick="closeModal('skillModal')">&times;</button>
-    <h2 id="skillModalTitle">Nouveau Skill</h2>
+    <div class="modal-header">
+      <h2 id="skillModalTitle">Nouveau Skill</h2>
+      <button class="modal-close" onclick="closeModal('skillModal')">✕</button>
+    </div>
     <input type="hidden" id="skillId">
     <div class="form-group">
-      <label>Nom du skill</label>
+      <label>Nom</label>
       <input id="skillName" placeholder="ex: React, Docker, TypeScript...">
     </div>
     <div class="form-group">
       <label>Description</label>
       <textarea id="skillDesc" placeholder="Ce que ce skill apporte..."></textarea>
     </div>
+    <div class="form-group" id="statusGroup" style="display:none">
+      <label>Statut</label>
+      <select id="skillStatus">
+        <option value="incubating">Incubating</option>
+        <option value="active">Active</option>
+        <option value="refining">Refining</option>
+        <option value="terminer">Terminé</option>
+        <option value="retired">Retired</option>
+      </select>
+    </div>
+    <div class="form-group" id="statusInfo" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:#fb923c;margin-bottom:18px">
+      <strong>✦ Statut :</strong> Nouveau skill automatiquement en <strong>incubation</strong>
+    </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Statut</label>
-        <select id="skillStatus">
-          <option value="idea">Idea</option>
-          <option value="incubating">Incubating</option>
-          <option value="active">Active</option>
-          <option value="refining">Refining</option>
-          <option value="retired">Retired</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Progression (0-100)</label>
-        <input type="number" id="skillProgress" min="0" max="100" value="0">
+        <label>Progression</label>
+        <input type="number" id="skillProgress" min="0" max="100" value="0" placeholder="0-100">
       </div>
     </div>
     <div class="form-group">
@@ -338,7 +1002,7 @@
       <select id="skillCategory"></select>
     </div>
     <div class="form-group">
-      <label>URL du dépôt</label>
+      <label>Dépôt</label>
       <input id="skillRepo" placeholder="https://github.com/...">
     </div>
     <div class="form-group">
@@ -352,55 +1016,82 @@
   </div>
 </div>
 
-<!-- Category Modal -->
 <div class="modal-overlay" id="catModal">
   <div class="modal">
-    <button class="close" onclick="closeModal('catModal')">&times;</button>
-    <h2>Gérer les Catégories</h2>
-    <div class="form-group">
-      <label>Nouvelle catégorie</label>
-      <input id="catName" placeholder="ex: Frontend, Backend, DevOps..." style="margin-bottom:8px">
-      <label style="margin-bottom:4px">Couleur</label>
-      <div class="color-picker" id="catColors"></div>
+    <div class="modal-header">
+      <h2>Gestion des Catégories</h2>
+      <button class="modal-close" onclick="closeModal('catModal')">✕</button>
     </div>
-    <button class="btn btn-primary" onclick="addCategory()" style="margin-bottom:20px">Ajouter</button>
+
+    <div class="search-input">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="catSearch" placeholder="Rechercher une catégorie..." oninput="renderCatList()">
+    </div>
+
+    <div class="cat-form-card" id="catFormCard">
+      <div class="cat-form-header" id="catFormHeader">Nouvelle catégorie</div>
+      <input type="hidden" id="editCatId" value="">
+      <div class="form-row">
+        <div class="form-group" style="flex:2;margin-bottom:0">
+          <label>Nom</label>
+          <input id="catName" placeholder="ex: Frontend, Backend, DevOps...">
+        </div>
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label>Couleur</label>
+          <div class="color-picker" id="catColors"></div>
+        </div>
+      </div>
+      <div class="cat-form-footer">
+        <button class="btn btn-ghost btn-sm" id="cancelEditBtn" style="display:none" onclick="cancelCatEdit()">Annuler</button>
+        <button class="btn btn-primary btn-sm" onclick="saveCategory()">Ajouter</button>
+      </div>
+    </div>
+
     <div id="catList"></div>
+
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('catModal')">Fermer</button>
     </div>
   </div>
 </div>
 
-<!-- Detail Modal -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
-    <button class="close" onclick="closeModal('detailModal')">&times;</button>
+    <div class="modal-header">
+      <h2 id="detailModalTitle">Détail</h2>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
     <div id="detailContent"></div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
 const API = '/api';
-
-// State
 let skills = [];
 let categories = [];
 let filterStatus = '';
 let filterCategory = '';
-
+let editingCatId = null;
 const COLORS = ['#6366f1','#8b5cf6','#ec4899','#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6'];
 
-// ---- Fetch helpers ----
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(API + path, {
     headers: { 'Content-Type': 'application/json', ...opts.headers },
     ...opts,
   });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erreur'); }
+  if (!res.ok) { const e = await res.json(); toast(e.error || 'Erreur'); throw new Error(e.error); }
   return res.json();
 }
 
-// ---- Init ----
 async function init() {
   await loadCategories();
   await loadSkills();
@@ -418,7 +1109,6 @@ async function loadSkills() {
   skills = await api('/skills?' + params.toString());
 }
 
-// ---- Render ----
 function renderAll() {
   renderStats();
   renderFilters();
@@ -434,22 +1124,23 @@ function renderStats() {
     <div class="stat-card"><div class="num">${total}</div><div class="label">Total Skills</div></div>
     <div class="stat-card"><div class="num">${byStatus['incubating'] || 0}</div><div class="label">En incubation</div></div>
     <div class="stat-card"><div class="num">${byStatus['active'] || 0}</div><div class="label">Actifs</div></div>
+    <div class="stat-card"><div class="num">${byStatus['terminer'] || 0}</div><div class="label">Terminés</div></div>
     <div class="stat-card"><div class="num">${avg}%</div><div class="label">Prog. moyenne</div></div>
   `;
 }
 
 function renderFilters() {
-  const statuses = ['','idea','incubating','active','refining','retired'];
-  const labels = ['Tous','Idea','Incubating','Active','Refining','Retired'];
+  const statuses = ['','idea','incubating','active','refining','terminer','retired'];
+  const labels = ['Tous','Idea','Incubating','Active','Refining','Terminé','Retired'];
   let html = '';
   statuses.forEach((s, i) => {
     html += `<button class="filter-btn ${filterStatus === s ? 'active' : ''}" onclick="setFilterStatus('${s}')">${labels[i]}</button>`;
   });
   if (categories.length) {
-    html += `<span style="width:1px;height:24px;background:var(--border);margin:0 4px;display:inline-block;vertical-align:middle"></span>`;
-    html += `<button class="filter-btn ${!filterCategory ? 'active' : ''}" onclick="setFilterCategory('')">Toutes cat.</button>`;
+    html += `<span class="filter-divider"></span>`;
+    html += `<button class="filter-btn ${!filterCategory ? 'active' : ''}" onclick="setFilterCategory('')">Toutes</button>`;
     categories.forEach(c => {
-      html += `<button class="filter-btn ${filterCategory == c.id ? 'active' : ''}" onclick="setFilterCategory(${c.id})" style="border-left:3px solid ${c.color}}">${c.name}</button>`;
+      html += `<button class="filter-btn ${filterCategory == c.id ? 'active' : ''}" onclick="setFilterCategory(${c.id})">${esc(c.name)}</button>`;
     });
   }
   document.getElementById('filters').innerHTML = html;
@@ -460,9 +1151,10 @@ function renderSkills() {
   if (!skills.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="icon">&#9889;</div>
-        <h3>Aucun skill pour le moment</h3>
-        <p style="color:var(--text2);font-size:14px">Clique sur "Nouveau Skill" pour commencer à incuber.</p>
+        <span class="icon">✦</span>
+        <h3>Commence ton incubation</h3>
+        <p>Ajoute ton premier skill pour démarrer le suivi de progression.</p>
+        <button class="btn btn-primary" onclick="openSkillModal()">+ Nouveau Skill</button>
       </div>`;
     return;
   }
@@ -472,29 +1164,39 @@ function renderSkills() {
     html += `
       <div class="skill-card" onclick="openDetail(${s.id})">
         <div class="card-actions">
-          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSkillModal(${s.id})">✎</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSkill(${s.id})">✕</button>
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSkillModal(${s.id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSkill(${s.id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
         </div>
-        <div class="top">
+        <div class="top-row">
           <h3>${esc(s.name)}</h3>
-          <span class="badge badge-${s.status}">${s.status}</span>
+          <span class="badge badge-${s.status}">${s.status === 'terminer' ? 'Terminé' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}</span>
         </div>
         ${s.description ? `<div class="desc">${esc(s.description)}</div>` : ''}
         <div class="meta">
-          ${cat ? `<span><span class="cat-dot" style="background:${cat.color}"></span> ${esc(cat.name)}</span>` : ''}
+          ${cat ? `<span class="cat-tag"><span class="cat-dot" style="background:${cat.color}"></span>${esc(cat.name)}</span>` : ''}
           <span>${s.progress}%</span>
-          ${s.milestones_count !== undefined ? `<span>${s.milestones_count} jalons</span>` : ''}
         </div>
-        <div class="progress-bar"><div class="fill" style="width:${s.progress}%"></div></div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="fill" style="width:${s.progress}%"></div></div>
+          <span class="progress-pct">${s.progress}%</span>
+        </div>
       </div>`;
   });
   html += '</div>';
   container.innerHTML = html;
 }
 
-function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 
-// ---- Filter ----
 function setFilterStatus(s) {
   filterStatus = s;
   refresh();
@@ -510,13 +1212,12 @@ async function refresh() {
   renderAll();
 }
 
-// ---- Skill CRUD ----
 async function openSkillModal(id) {
   document.getElementById('skillModalTitle').textContent = id ? 'Modifier le Skill' : 'Nouveau Skill';
   document.getElementById('skillId').value = id || '';
   document.getElementById('skillName').value = '';
   document.getElementById('skillDesc').value = '';
-  document.getElementById('skillStatus').value = 'idea';
+  document.getElementById('skillStatus').value = 'incubating';
   document.getElementById('skillProgress').value = 0;
   document.getElementById('skillRepo').value = '';
   document.getElementById('skillNotes').value = '';
@@ -524,18 +1225,23 @@ async function openSkillModal(id) {
   const sel = document.getElementById('skillCategory');
   sel.innerHTML = '<option value="">— Aucune —</option>';
   categories.forEach(c => {
-    sel.innerHTML += `<option value="${c.id}" style="color:${c.color}">${esc(c.name)}</option>`;
+    sel.innerHTML += `<option value="${c.id}">${esc(c.name)}</option>`;
   });
 
   if (id) {
+    document.getElementById('statusGroup').style.display = '';
+    document.getElementById('statusInfo').style.display = 'none';
     const s = await api('/skills/' + id);
     document.getElementById('skillName').value = s.name || '';
     document.getElementById('skillDesc').value = s.description || '';
-    document.getElementById('skillStatus').value = s.status || 'idea';
+    document.getElementById('skillStatus').value = s.status || 'incubating';
     document.getElementById('skillProgress').value = s.progress || 0;
     document.getElementById('skillCategory').value = s.category_id || '';
     document.getElementById('skillRepo').value = s.repo_url || '';
     document.getElementById('skillNotes').value = s.notes || '';
+  } else {
+    document.getElementById('statusGroup').style.display = 'none';
+    document.getElementById('statusInfo').style.display = '';
   }
 
   openModal('skillModal');
@@ -552,11 +1258,13 @@ async function saveSkill() {
     repo_url: document.getElementById('skillRepo').value.trim(),
     notes: document.getElementById('skillNotes').value.trim(),
   };
-  if (!data.name) return alert('Le nom est requis.');
+  if (!data.name) return toast('Le nom est requis.');
   if (id) {
     await api('/skills/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Skill mis à jour ✓');
   } else {
     await api('/skills', { method: 'POST', body: JSON.stringify(data) });
+    toast('Skill créé ✓');
   }
   closeModal('skillModal');
   await refresh();
@@ -565,29 +1273,53 @@ async function saveSkill() {
 async function deleteSkill(id) {
   if (!confirm('Supprimer ce skill définitivement ?')) return;
   await api('/skills/' + id, { method: 'DELETE' });
+  toast('Skill supprimé');
   await refresh();
 }
 
-// ---- Category ----
 function openCatModal() {
+  editingCatId = null;
+  document.getElementById('editCatId').value = '';
   document.getElementById('catName').value = '';
+  document.getElementById('catSearch').value = '';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('catFormHeader').textContent = 'Nouvelle catégorie';
+  document.querySelector('#catModal .btn-primary').textContent = 'Ajouter';
+  initColorPicker();
+  renderCatList();
+  openModal('catModal');
+}
+
+function initColorPicker() {
   const cp = document.getElementById('catColors');
   cp.innerHTML = '';
   COLORS.forEach(c => {
     cp.innerHTML += `<div class="c" style="background:${c}" data-color="${c}" onclick="document.querySelectorAll('#catColors .c').forEach(x=>x.classList.remove('active'));this.classList.add('active')"></div>`;
   });
   cp.firstChild?.classList.add('active');
-  renderCatList();
-  openModal('catModal');
 }
 
-async function addCategory() {
+async function saveCategory() {
   const name = document.getElementById('catName').value.trim();
-  if (!name) return alert('Nom requis');
+  if (!name) return toast('Nom requis');
   const active = document.querySelector('#catColors .c.active');
   const color = active ? active.dataset.color : '#6366f1';
-  await api('/categories', { method: 'POST', body: JSON.stringify({ name, color }) });
+  const editId = document.getElementById('editCatId').value;
+
+  if (editId) {
+    await api('/categories/' + editId, { method: 'PUT', body: JSON.stringify({ name, color }) });
+    toast('Catégorie modifiée ✓');
+  } else {
+    await api('/categories', { method: 'POST', body: JSON.stringify({ name, color }) });
+    toast('Catégorie ajoutée ✓');
+  }
+
   document.getElementById('catName').value = '';
+  document.getElementById('editCatId').value = '';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('catFormHeader').textContent = 'Nouvelle catégorie';
+  document.querySelector('#catModal .btn-primary').textContent = 'Ajouter';
+  editingCatId = null;
   await loadCategories();
   renderCatList();
   renderFilters();
@@ -596,6 +1328,7 @@ async function addCategory() {
 async function deleteCategory(id) {
   if (!confirm('Supprimer cette catégorie ? Les skills associés ne seront plus catégorisés.')) return;
   await api('/categories/' + id, { method: 'DELETE' });
+  toast('Catégorie supprimée');
   await loadCategories();
   renderCatList();
   renderFilters();
@@ -603,37 +1336,86 @@ async function deleteCategory(id) {
 }
 
 function renderCatList() {
+  const search = (document.getElementById('catSearch').value || '').toLowerCase();
+  const filtered = search ? categories.filter(c => c.name.toLowerCase().includes(search)) : categories;
   const el = document.getElementById('catList');
-  if (!categories.length) { el.innerHTML = '<p style="color:var(--text2)">Aucune catégorie.</p>'; return; }
-  el.innerHTML = categories.map(c => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span class="cat-dot" style="width:10px;height:10px;background:${c.color}"></span>
-      <span style="flex:1">${esc(c.name)}</span>
-      <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})">✕</button>
-    </div>
-  `).join('');
+  if (!filtered.length) {
+    el.innerHTML = '<p style="color:var(--text-2);font-size:14px;text-align:center;padding:20px">' + (search ? 'Aucune catégorie trouvée.' : 'Aucune catégorie.') + '</p>';
+    return;
+  }
+  el.innerHTML = filtered.map(c => {
+    const count = c.skill_count || 0;
+    return `
+      <div class="category-item">
+        <span class="cat-dot" style="width:12px;height:12px;background:${c.color};border-radius:50%;flex-shrink:0;box-shadow:0 0 8px ${c.color}40"></span>
+        <span class="name">${esc(c.name)}</span>
+        <span class="cat-count">${count} skill${count > 1 ? 's' : ''}</span>
+        <div class="cat-actions">
+          <button class="btn btn-sm btn-ghost" onclick="editCategory(${c.id})" title="Modifier">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})" title="Supprimer">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-// ---- Detail ----
+function editCategory(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  editingCatId = id;
+  document.getElementById('editCatId').value = id;
+  document.getElementById('catName').value = cat.name;
+  document.getElementById('catFormHeader').textContent = 'Modifier la catégorie';
+  document.getElementById('cancelEditBtn').style.display = '';
+  document.querySelector('#catModal .btn-primary').textContent = 'Enregistrer';
+  const swatches = document.querySelectorAll('#catColors .c');
+  swatches.forEach(el => {
+    el.classList.remove('active');
+    if (el.dataset.color === cat.color) el.classList.add('active');
+  });
+  document.getElementById('catName').focus();
+  document.getElementById('catFormCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelCatEdit() {
+  editingCatId = null;
+  document.getElementById('editCatId').value = '';
+  document.getElementById('catName').value = '';
+  document.getElementById('catFormHeader').textContent = 'Nouvelle catégorie';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.querySelector('#catModal .btn-primary').textContent = 'Ajouter';
+  initColorPicker();
+}
+
 async function openDetail(id) {
   const s = await api('/skills/' + id);
   const cat = categories.find(c => c.id === s.category_id);
   const el = document.getElementById('detailContent');
+
+  const catHtml = cat ? `<span class="detail-meta-item"><span class="cat-dot" style="width:8px;height:8px;background:${cat.color};border-radius:50%"></span> ${esc(cat.name)}</span>` : '';
+
   el.innerHTML = `
     <div class="detail-header">
       <h2>${esc(s.name)}</h2>
-      <span class="badge badge-${s.status}">${s.status}</span>
+      <span class="badge badge-${s.status}">${s.status === 'terminer' ? 'Terminé' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}</span>
     </div>
 
-    <div class="detail-section">
-      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:14px;color:var(--text2)">
-        ${cat ? `<span><span class="cat-dot" style="width:8px;height:8px;background:${cat.color};display:inline-block;border-radius:50%"></span> ${esc(cat.name)}</span>` : ''}
-        <span>Progression: <strong>${s.progress}%</strong></span>
-        ${s.repo_url ? `<span>Repo: <a href="${esc(s.repo_url)}" target="_blank" style="color:var(--primary)">${esc(s.repo_url)}</a></span>` : ''}
-      </div>
-      ${s.description ? `<p style="font-size:14px;line-height:1.6;color:var(--text2);margin-bottom:16px">${esc(s.description)}</p>` : ''}
-      ${s.notes ? `<p style="font-size:13px;line-height:1.5;color:var(--text2);padding:10px;background:var(--surface);border-radius:6px;margin-bottom:16px"><em>${esc(s.notes)}</em></p>` : ''}
+    <div class="detail-meta">
+      ${catHtml}
+      <span class="detail-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Progression: ${s.progress}%
+      </span>
+      ${s.repo_url ? `<a href="${esc(s.repo_url)}" target="_blank" class="detail-repo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        Voir le dépôt
+      </a>` : ''}
     </div>
+
+    ${s.description ? `<p class="detail-desc">${esc(s.description)}</p>` : ''}
+    ${s.notes ? `<div class="detail-notes">${esc(s.notes)}</div>` : ''}
 
     <div class="detail-section">
       <h3>Jalons</h3>
@@ -648,12 +1430,12 @@ async function openDetail(id) {
       </div>
       <div class="milestone-input">
         <input id="milestoneInput" placeholder="Nouveau jalon..." onkeydown="if(event.key==='Enter')addMilestone(${id})">
-        <button class="btn btn-sm btn-primary" onclick="addMilestone(${id})">+</button>
+        <button class="btn btn-primary btn-sm" onclick="addMilestone(${id})">Ajouter</button>
       </div>
     </div>
 
     <div class="detail-section">
-      <h3>Journal d'incubation</h3>
+      <h3>Journal</h3>
       <div id="logList">
         ${(s.logs || []).map(l => `
           <div class="log-item">
@@ -664,9 +1446,21 @@ async function openDetail(id) {
       </div>
       <div class="log-input">
         <input id="logInput" placeholder="Ajouter une note..." onkeydown="if(event.key==='Enter')addLog(${id})">
-        <button class="btn btn-sm btn-primary" onclick="addLog(${id})">+</button>
+        <button class="btn btn-primary btn-sm" onclick="addLog(${id})">Ajouter</button>
       </div>
     </div>
+
+    ${s.status === 'incubating' ? `
+    <div class="detail-section" style="border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:18px;background:rgba(34,197,94,.04)">
+      <h3 style="color:#4ade80;border:none;padding:0;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Terminer l'incubation
+      </h3>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input id="exportDir" placeholder="Dossier de sauvegarde (ex: C:\\Users\\...\\skills)" style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+        <button class="btn btn-primary" onclick="exportSkill(${s.id})">Valider & Exporter</button>
+      </div>
+    </div>` : ''}
 
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fermer</button>
@@ -682,6 +1476,7 @@ async function addMilestone(skillId) {
   if (!title) return;
   await api(`/skills/${skillId}/milestones`, { method: 'POST', body: JSON.stringify({ title }) });
   input.value = '';
+  toast('Jalon ajouté ✓');
   openDetail(skillId);
 }
 
@@ -689,16 +1484,35 @@ async function toggleMilestone(id) {
   await api(`/milestones/${id}/toggle`, { method: 'PUT' });
   const detail = document.querySelector('#detailModal.open');
   if (detail) {
-    const idInput = document.querySelector('#detailContent [data-skill-id]');
+    const skillName = document.querySelector('#detailContent h2')?.textContent;
+    if (skillName) {
+      const s = skills.find(sk => sk.name === skillName);
+      if (s) openDetail(s.id);
+    }
   }
-  document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
-  const s = await api('/skills/' + document.querySelector('#detailContent h2').textContent);
 }
 
 async function deleteMilestone(id) {
   await api(`/milestones/${id}`, { method: 'DELETE' });
-  const skillId = document.querySelector('#detailContent .milestone-input button').getAttribute('onclick').match(/\d+/)[0];
-  openDetail(parseInt(skillId));
+  toast('Jalon supprimé');
+  const skillName = document.querySelector('#detailContent h2')?.textContent;
+  if (skillName) {
+    const s = skills.find(sk => sk.name === skillName);
+    if (s) openDetail(s.id);
+  }
+}
+
+async function exportSkill(skillId) {
+  const dir = document.getElementById('exportDir').value.trim();
+  if (!dir) return toast('Veuillez entrer un dossier de sauvegarde.');
+  try {
+    const res = await api(`/skills/${skillId}/export`, { method: 'POST', body: JSON.stringify({ directory: dir }) });
+    toast(`Skill exporté ✓ → ${res.path}`);
+    closeModal('detailModal');
+    await refresh();
+  } catch (e) {
+    toast('Erreur d\'export: ' + e.message);
+  }
 }
 
 async function addLog(skillId) {
@@ -707,17 +1521,29 @@ async function addLog(skillId) {
   if (!message) return;
   await api(`/skills/${skillId}/logs`, { method: 'POST', body: JSON.stringify({ message }) });
   input.value = '';
+  toast('Note ajoutée ✓');
   openDetail(skillId);
 }
 
-// ---- Modal helpers ----
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => {
+    if (e.target === m) {
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
 });
 
-// ---- Start ----
 init();
 </script>
 </body>

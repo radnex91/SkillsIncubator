@@ -44,14 +44,25 @@ async function init() {
   }
 
   run('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, color TEXT DEFAULT \'#6366f1\', created_at TEXT DEFAULT (datetime(\'now\')))');
-  run('CREATE TABLE IF NOT EXISTS skills (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT DEFAULT \'\', category_id INTEGER, status TEXT DEFAULT \'idea\' CHECK(status IN (\'idea\',\'incubating\',\'active\',\'refining\',\'retired\')), progress INTEGER DEFAULT 0 CHECK(progress >= 0 AND progress <= 100), repo_url TEXT DEFAULT \'\', notes TEXT DEFAULT \'\', created_at TEXT DEFAULT (datetime(\'now\')), updated_at TEXT DEFAULT (datetime(\'now\')))');
+  run('CREATE TABLE IF NOT EXISTS skills (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT DEFAULT \'\', category_id INTEGER, status TEXT DEFAULT \'incubating\', progress INTEGER DEFAULT 0 CHECK(progress >= 0 AND progress <= 100), repo_url TEXT DEFAULT \'\', notes TEXT DEFAULT \'\', created_at TEXT DEFAULT (datetime(\'now\')), updated_at TEXT DEFAULT (datetime(\'now\')))');
+
+  try {
+    run("INSERT INTO skills (name, status) VALUES ('__mig_test__', 'terminer')");
+    run("DELETE FROM skills WHERE name = '__mig_test__'");
+  } catch {
+    db.run("ALTER TABLE skills RENAME TO skills_old");
+    db.run("CREATE TABLE skills (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT DEFAULT '', category_id INTEGER, status TEXT DEFAULT 'incubating', progress INTEGER DEFAULT 0 CHECK(progress >= 0 AND progress <= 100), repo_url TEXT DEFAULT '', notes TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))");
+    db.run("INSERT INTO skills (id, name, description, category_id, status, progress, repo_url, notes, created_at, updated_at) SELECT id, name, description, category_id, status, progress, repo_url, notes, created_at, updated_at FROM skills_old");
+    db.run("DROP TABLE skills_old");
+    saveDb();
+  }
   run('CREATE TABLE IF NOT EXISTS milestones (id INTEGER PRIMARY KEY AUTOINCREMENT, skill_id INTEGER NOT NULL, title TEXT NOT NULL, done INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime(\'now\')))');
   run('CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, skill_id INTEGER NOT NULL, message TEXT NOT NULL, created_at TEXT DEFAULT (datetime(\'now\')))');
   saveDb();
 
   // ---- Categories ----
   app.get('/api/categories', (req, res) => {
-    res.json(q('SELECT * FROM categories ORDER BY name'));
+    res.json(q("SELECT c.*, (SELECT COUNT(*) FROM skills WHERE category_id = c.id) AS skill_count FROM categories c ORDER BY c.name"));
   });
 
   app.post('/api/categories', (req, res) => {
@@ -65,6 +76,14 @@ async function init() {
   app.delete('/api/categories/:id', (req, res) => {
     run('UPDATE skills SET category_id = NULL WHERE category_id = ?', [req.params.id]);
     run('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    saveDb();
+    res.json({ ok: true });
+  });
+
+  app.put('/api/categories/:id', (req, res) => {
+    const { name, color } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    run('UPDATE categories SET name = ?, color = ? WHERE id = ?', [name, color || '#6366f1', req.params.id]);
     saveDb();
     res.json({ ok: true });
   });
@@ -94,11 +113,10 @@ async function init() {
   app.post('/api/skills', (req, res) => {
     const { name, description, category_id, status, progress, repo_url, notes } = req.body;
     if (!name) return res.status(400).json({ error: 'Name required' });
-    run('INSERT INTO skills (name, description, category_id, status, progress, repo_url, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, description || '', category_id ?? null, status || 'idea', progress ?? 0, repo_url || '', notes || '']);
+    run('INSERT INTO skills (name, description, category_id, status, progress, repo_url, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, description || '', category_id ?? null, status || 'incubating', progress ?? 0, repo_url || '', notes || '']);
     saveDb();
     const newId = q('SELECT last_insert_rowid() as id')[0].id;
-    const skill = q('SELECT s.*, c.name AS category_name, c.color AS category_color FROM skills s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?', [newId])[0];
-    res.status(201).json(skill);
+    res.status(201).json({ id: newId, name });
   });
 
   app.put('/api/skills/:id', (req, res) => {
@@ -117,6 +135,46 @@ async function init() {
     ]);
     saveDb();
     res.json(q('SELECT s.*, c.name AS category_name, c.color AS category_color FROM skills s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?', [req.params.id])[0]);
+  });
+
+  app.post('/api/skills/:id/export', (req, res) => {
+    const { directory } = req.body;
+    if (!directory) return res.status(400).json({ error: 'Directory required' });
+    const skill = q('SELECT * FROM skills WHERE id = ?', [req.params.id])[0];
+    if (!skill) return res.status(404).json({ error: 'Not found' });
+    const cat = q('SELECT * FROM categories WHERE id = ?', [skill.category_id])[0];
+    const dir = path.resolve(directory.toString());
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const skillDir = path.join(dir, skill.name.toLowerCase().replace(/[\s]+/g, '-').replace(/[^a-z0-9-]/g, ''));
+    if (!fs.existsSync(skillDir)) fs.mkdirSync(skillDir, { recursive: true });
+    const milestones = q('SELECT * FROM milestones WHERE skill_id = ? ORDER BY created_at', [skill.id]);
+    const content = `---
+name: ${skill.name}
+description: ${skill.description || ''}
+status: terminer
+progress: ${skill.progress}
+created_at: ${skill.created_at}
+completed_at: ${new Date().toISOString()}
+---
+
+# ${skill.name}
+
+${skill.description || ''}
+
+${cat ? `**Categorie:** ${cat.name}\n` : ''}
+**Progression:** ${skill.progress}%
+
+${skill.notes ? `## Notes\n\n${skill.notes}\n` : ''}
+
+${milestones.length ? `## Jalons\n\n${milestones.map(m => `- [${m.done ? 'x' : ' '}] ${m.title}`).join('\n')}\n` : ''}
+`;
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), content, 'utf-8');
+    run("UPDATE skills SET status = 'terminer', updated_at = datetime('now') WHERE id = ?", [skill.id]);
+    saveDb();
+    const updated = q('SELECT s.*, c.name AS category_name, c.color AS category_color FROM skills s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?', [skill.id])[0];
+    updated.milestones = q('SELECT * FROM milestones WHERE skill_id = ? ORDER BY created_at', [skill.id]);
+    updated.logs = q('SELECT * FROM logs WHERE skill_id = ? ORDER BY created_at DESC', [skill.id]);
+    res.json({ ok: true, path: path.join(skillDir, 'SKILL.md'), skill: updated });
   });
 
   app.delete('/api/skills/:id', (req, res) => {
