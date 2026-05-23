@@ -1834,7 +1834,6 @@ function renderChat() {
 async function autoInitChat(skillId) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
-  chatMessages = [{ role: 'user', content: 'Présente-toi et donne-moi un premier conseil pour bien démarrer l\'incubation de ce skill.' }];
   const typingDiv = document.createElement('div');
   typingDiv.className = 'chat-typing';
   typingDiv.id = 'chatTyping';
@@ -1842,10 +1841,10 @@ async function autoInitChat(skillId) {
   container.appendChild(typingDiv);
   container.scrollTop = container.scrollHeight;
   try {
-    const res = await api(`/skills/${skillId}/chat`, { method: 'POST', body: JSON.stringify({ messages: chatMessages }) });
-    chatMessages.push({ role: 'assistant', content: res.content });
+    const res = await api(`/skills/${skillId}/chat`, { method: 'POST', body: JSON.stringify({ messages: [{ role: 'user', content: 'Présente-toi et donne un premier conseil pour ce skill.' }] }) });
+    chatMessages = [{ role: 'assistant', content: res.content }];
   } catch {
-    chatMessages.push({ role: 'assistant', content: 'Assistant IA disponible après configuration dans le menu Paramètres → IA.' });
+    chatMessages = [{ role: 'assistant', content: 'Assistant IA disponible après configuration dans le menu Paramètres → IA.' }];
   }
   renderChat();
 }
