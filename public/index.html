@@ -1485,6 +1485,7 @@ function cancelCatEdit() {
 }
 
 async function openDetail(id) {
+  chatMessages = [];
   const s = await api('/skills/' + id);
   const cat = categories.find(c => c.id === s.category_id);
   const el = document.getElementById('detailContent');
@@ -1557,6 +1558,18 @@ async function openDetail(id) {
       </div>
     </div>` : ''}
 
+    <div class="chat-section" id="chatSection">
+      <h3 style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Assistant IA
+      </h3>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input id="chatInput" placeholder="Pose une question sur ce skill..." onkeydown="if(event.key==='Enter')sendChatMessage(${id})">
+        <button class="btn btn-primary btn-sm" onclick="sendChatMessage(${id})">Envoyer</button>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fermer</button>
       <button class="btn btn-primary" onclick="closeModal('detailModal');openSkillModal(${id})">Modifier</button>
@@ -1618,6 +1631,47 @@ async function addLog(skillId) {
   input.value = '';
   toast('Note ajoutée ✓');
   openDetail(skillId);
+}
+
+let chatMessages = [];
+
+async function sendChatMessage(skillId) {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  chatMessages.push({ role: 'user', content: text });
+  input.value = '';
+  renderChat();
+
+  const chatContainer = document.getElementById('chatMessages');
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'chat-typing';
+  typingDiv.id = 'chatTyping';
+  typingDiv.innerHTML = 'Assistant réfléchit<span class="dots"><span></span><span></span><span></span></span>';
+  chatContainer.appendChild(typingDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  try {
+    const res = await api(`/skills/${skillId}/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ messages: chatMessages }),
+    });
+    chatMessages.push({ role: 'assistant', content: res.content });
+  } catch (err) {
+    chatMessages.push({ role: 'assistant', content: 'Désolé, l\'assistant est momentanément indisponible. Vérifie que le service IA est bien lancé.' });
+  }
+
+  renderChat();
+}
+
+function renderChat() {
+  const container = document.getElementById('chatMessages');
+  if (!container) return;
+  container.innerHTML = chatMessages.map(m => `
+    <div class="chat-bubble ${m.role}">${esc(m.content)}</div>
+  `).join('');
+  container.scrollTop = container.scrollHeight;
 }
 
 function openModal(id) {
