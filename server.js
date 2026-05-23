@@ -6,6 +6,11 @@ const initSqlJs = require('sql.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'data', 'skills.db');
+const AI_PROVIDER = process.env.AI_PROVIDER || 'ollama';
+const AI_MODEL = process.env.AI_MODEL || 'llama3';
+const AI_ENDPOINT = process.env.AI_ENDPOINT || 'http://localhost:11434';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -30,6 +35,52 @@ function run(sql, params) {
   if (params) stmt.bind(params);
   stmt.step();
   stmt.free();
+}
+
+function buildSkillContext(skillId) {
+  const skill = q('SELECT s.*, c.name AS category_name, c.color AS category_color FROM skills s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?', [skillId]);
+  if (!skill.length) return null;
+  const s = skill[0];
+  s.milestones = q('SELECT * FROM milestones WHERE skill_id = ? ORDER BY created_at', [skillId]);
+  s.logs = q('SELECT * FROM logs WHERE skill_id = ? ORDER BY created_at DESC LIMIT 10', [skillId]);
+  return s;
+}
+
+async function callAI(messages, systemPrompt) {
+  if (AI_PROVIDER === 'ollama') {
+    const res = await fetch(AI_ENDPOINT + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        stream: false,
+      }),
+    });
+    if (!res.ok) throw new Error('Ollama error: ' + res.statusText);
+    const data = await res.json();
+    return data.message.content;
+  } else if (AI_PROVIDER === 'openai') {
+    const { default: OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+    });
+    return completion.choices[0].message.content;
+  } else if (AI_PROVIDER === 'anthropic') {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const msg = await anthropic.messages.create({
+      model: AI_MODEL,
+      system: systemPrompt,
+      messages: messages,
+      max_tokens: 1024,
+    });
+    return msg.content[0].text;
+  } else {
+    throw new Error('Unknown AI provider: ' + AI_PROVIDER);
+  }
 }
 
 async function init() {
