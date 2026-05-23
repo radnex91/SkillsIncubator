@@ -926,6 +926,91 @@
   }
   .category-item:hover .cat-actions { opacity: 1; }
 
+  .chat-section {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    margin-top: 20px;
+  }
+  .chat-messages {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    animation: fadeIn .2s;
+  }
+  .chat-bubble.user {
+    align-self: flex-end;
+    background: var(--primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.assistant {
+    align-self: flex-start;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-bubble.error {
+    align-self: flex-start;
+    background: rgba(239,68,68,.15);
+    border: 1px solid rgba(239,68,68,.2);
+    color: var(--red);
+  }
+  .chat-input {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+  .chat-input input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+  .chat-typing {
+    align-self: flex-start;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chat-typing .dots { display: flex; gap: 3px; }
+  .chat-typing .dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-3);
+    animation: dotPulse 1.4s infinite ease-in-out;
+  }
+  .chat-typing .dots span:nth-child(2) { animation-delay: .2s; }
+  .chat-typing .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes dotPulse {
+    0%, 80%, 100% { opacity: .3; transform: scale(.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
   @media (max-width: 640px) {
     .app { padding: 16px 12px; }
     .skills-grid { grid-template-columns: 1fr; }
@@ -1084,10 +1169,16 @@ function toast(msg) {
 }
 
 async function api(path, opts = {}) {
-  const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json', ...opts.headers },
-    ...opts,
-  });
+  let res;
+  try {
+    res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      ...opts,
+    });
+  } catch (err) {
+    toast('Erreur réseau: ' + err.message);
+    throw err;
+  }
   if (!res.ok) { const e = await res.json(); toast(e.error || 'Erreur'); throw new Error(e.error); }
   return res.json();
 }
@@ -1259,15 +1350,19 @@ async function saveSkill() {
     notes: document.getElementById('skillNotes').value.trim(),
   };
   if (!data.name) return toast('Le nom est requis.');
-  if (id) {
-    await api('/skills/' + id, { method: 'PUT', body: JSON.stringify(data) });
-    toast('Skill mis à jour ✓');
-  } else {
-    await api('/skills', { method: 'POST', body: JSON.stringify(data) });
-    toast('Skill créé ✓');
+  try {
+    if (id) {
+      await api('/skills/' + id, { method: 'PUT', body: JSON.stringify(data) });
+      toast('Skill mis à jour ✓');
+    } else {
+      await api('/skills', { method: 'POST', body: JSON.stringify(data) });
+      toast('Skill créé ✓');
+    }
+    closeModal('skillModal');
+    await refresh();
+  } catch (err) {
+    console.error('Erreur saveSkill:', err);
   }
-  closeModal('skillModal');
-  await refresh();
 }
 
 async function deleteSkill(id) {
