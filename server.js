@@ -228,6 +228,37 @@ ${milestones.length ? `## Jalons\n\n${milestones.map(m => `- [${m.done ? 'x' : '
     res.json({ ok: true, path: path.join(skillDir, 'SKILL.md'), skill: updated });
   });
 
+  app.post('/api/skills/:id/chat', async (req, res) => {
+    try {
+      const skill = buildSkillContext(req.params.id);
+      if (!skill) return res.status(404).json({ error: 'Skill not found' });
+
+      const { messages } = req.body;
+      if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Messages array required' });
+
+      const milestoneLines = (skill.milestones || []).map(m =>
+        `[${m.done ? 'x' : ' '}] ${m.title}`
+      ).join('\n');
+      const recentLogs = (skill.logs || []).map(l =>
+        `[${l.created_at}] ${l.message}`
+      ).join('\n');
+
+      const systemPrompt = `Tu es un assistant expert en incubation de compétences. Tu aides l'utilisateur à développer son skill "${skill.name}" en mode "${skill.status}" (progression: ${skill.progress}%).
+
+Contexte du skill :
+- Description : ${skill.description || 'Non renseignée'}
+- Catégorie : ${skill.category_name || 'Aucune'}
+${skill.repo_url ? '- Dépôt : ' + skill.repo_url + '\n' : ''}${skill.notes ? '- Notes : ' + skill.notes + '\n' : ''}${milestoneLines ? '- Jalons :\n' + milestoneLines + '\n' : ''}${recentLogs ? '- Logs récents :\n' + recentLogs : ''}
+Sois concis, pratique, et orienté action. Réponds en français.`;
+
+      const content = await callAI(messages, systemPrompt);
+      res.json({ content });
+    } catch (err) {
+      console.error('Chat error:', err);
+      res.status(500).json({ error: err.message || 'Erreur du service IA' });
+    }
+  });
+
   app.delete('/api/skills/:id', (req, res) => {
     run('DELETE FROM skills WHERE id = ?', [req.params.id]);
     saveDb();
