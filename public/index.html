@@ -1658,67 +1658,11 @@ async function openDetail(id) {
       ${catHtml}
       <span class="detail-meta-item">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Progression: ${s.progress}%
+        ${s.progress}%
       </span>
-      ${s.repo_url ? `<a href="${esc(s.repo_url)}" target="_blank" class="detail-repo">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        Voir le dépôt
-      </a>` : ''}
     </div>
-
-    ${s.description ? `<p class="detail-desc">${esc(s.description)}</p>` : ''}
-    ${s.notes ? `<div class="detail-notes">${esc(s.notes)}</div>` : ''}
-
-    <div class="detail-section">
-      <h3>Jalons</h3>
-      <div id="milestoneList">
-        ${(s.milestones || []).map(m => `
-          <div class="milestone-item">
-            <div class="check ${m.done ? 'done' : ''}" onclick="toggleMilestone(${m.id})"></div>
-            <span class="text ${m.done ? 'done' : ''}">${esc(m.title)}</span>
-            <button class="del-milestone" onclick="deleteMilestone(${m.id})">✕</button>
-          </div>
-        `).join('')}
-      </div>
-      <div class="milestone-input">
-        <input id="milestoneInput" placeholder="Nouveau jalon..." onkeydown="if(event.key==='Enter')addMilestone(${id})">
-        <button class="btn btn-primary btn-sm" onclick="addMilestone(${id})">Ajouter</button>
-      </div>
-    </div>
-
-    <div class="detail-section">
-      <h3>Journal</h3>
-      <div id="logList">
-        ${(s.logs || []).map(l => `
-          <div class="log-item">
-            <div class="time">${l.created_at}</div>
-            <div>${esc(l.message)}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="log-input">
-        <input id="logInput" placeholder="Ajouter une note..." onkeydown="if(event.key==='Enter')addLog(${id})">
-        <button class="btn btn-primary btn-sm" onclick="addLog(${id})">Ajouter</button>
-      </div>
-    </div>
-
-    ${s.status === 'incubating' ? `
-    <div class="detail-section" style="border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:18px;background:rgba(34,197,94,.04)">
-      <h3 style="color:#4ade80;border:none;padding:0;margin-bottom:12px;display:flex;align-items:center;gap:6px">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Terminer l'incubation
-      </h3>
-      <div style="display:flex;gap:10px;align-items:center">
-        <input id="exportDir" placeholder="Dossier de sauvegarde (ex: C:\\Users\\...\\skills)" style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px;font-family:inherit;outline:none">
-        <button class="btn btn-primary" onclick="exportSkill(${s.id})">Valider & Exporter</button>
-      </div>
-    </div>` : ''}
 
     <div class="chat-section" id="chatSection">
-      <h3 style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Assistant IA
-      </h3>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input">
         <input id="chatInput" placeholder="Pose une question sur ce skill..." onkeydown="if(event.key==='Enter')sendChatMessage(${id})">
@@ -1726,7 +1670,7 @@ async function openDetail(id) {
       </div>
     </div>
 
-    <div class="form-actions">
+    <div class="form-actions" style="border:none;margin-top:0">
       <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fermer</button>
       <button class="btn btn-primary" onclick="closeModal('detailModal');openSkillModal(${id})">Modifier</button>
     </div>
