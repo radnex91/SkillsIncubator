@@ -1,0 +1,14 @@
+{
+  "name": "incubator-skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Incubateur de Skills - Single Page Application",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.11.0"
+  }
+}
