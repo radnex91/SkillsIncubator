@@ -1732,6 +1732,7 @@ async function openDetail(id) {
     </div>
   `;
   openModal('detailModal');
+  if (s.status === 'incubating') setTimeout(() => autoInitChat(id), 600);
 }
 
 async function addMilestone(skillId) {
@@ -1828,6 +1829,25 @@ function renderChat() {
     <div class="chat-bubble ${m.role}">${esc(m.content)}</div>
   `).join('');
   container.scrollTop = container.scrollHeight;
+}
+
+async function autoInitChat(skillId) {
+  const container = document.getElementById('chatMessages');
+  if (!container) return;
+  chatMessages = [{ role: 'user', content: 'Présente-toi et donne-moi un premier conseil pour bien démarrer l\'incubation de ce skill.' }];
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'chat-typing';
+  typingDiv.id = 'chatTyping';
+  typingDiv.innerHTML = 'Assistant réfléchit<span class="dots"><span></span><span></span><span></span></span>';
+  container.appendChild(typingDiv);
+  container.scrollTop = container.scrollHeight;
+  try {
+    const res = await api(`/skills/${skillId}/chat`, { method: 'POST', body: JSON.stringify({ messages: chatMessages }) });
+    chatMessages.push({ role: 'assistant', content: res.content });
+  } catch {
+    chatMessages.push({ role: 'assistant', content: 'Assistant IA disponible après configuration dans le menu Paramètres → IA.' });
+  }
+  renderChat();
 }
 
 function openModal(id) {
