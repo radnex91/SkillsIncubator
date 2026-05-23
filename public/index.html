@@ -1165,27 +1165,17 @@
     </div>
 
     <div class="form-group">
-      <label>Fournisseur IA</label>
-      <select id="aiProvider">
-        <option value="ollama">Ollama (local)</option>
-        <option value="openai">OpenAI</option>
-        <option value="anthropic">Anthropic</option>
+      <label>Modèle OpenCode</label>
+      <select id="aiModel">
+        <option value="big-pickle">Big Pickle (gratuit)</option>
+        <option value="deepseek-v4-flash-free">DeepSeek V4 Flash Free (gratuit)</option>
+        <option value="nemotron-3-super-free">Nemotron 3 Super Free (gratuit)</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label>Modèle</label>
-      <input id="aiModel" placeholder="llama3, gpt-4o-mini, claude-3-haiku...">
-    </div>
-
-    <div class="form-group" id="aiEndpointGroup">
-      <label>Endpoint API</label>
-      <input id="aiEndpoint" placeholder="http://localhost:11434">
-    </div>
-
-    <div class="form-group" id="aiKeyGroup" style="display:none">
-      <label>Clé API</label>
-      <input id="aiApiKey" type="password" placeholder="sk-...">
+      <label>Clé API OpenCode</label>
+      <input id="aiApiKey" type="password" placeholder="oc_...">
     </div>
 
     <div id="aiConfigStatus" style="font-size:13px;padding:10px 14px;border-radius:10px;margin-bottom:10px;display:none"></div>
@@ -1335,55 +1325,19 @@ async function openAISettings() {
   try {
     aiConfig = await api('/ai/config');
   } catch {
-    aiConfig = { provider: 'ollama', model: 'llama3', endpoint: 'http://localhost:11434', openaiKey: '', anthropicKey: '' };
+    aiConfig = { model: 'big-pickle', apiKey: '' };
   }
-  document.getElementById('aiProvider').value = aiConfig.provider || 'ollama';
-  document.getElementById('aiModel').value = aiConfig.model || '';
-  document.getElementById('aiEndpoint').value = aiConfig.endpoint || '';
-  const keyField = document.getElementById('aiApiKey');
-  const keyGroup = document.getElementById('aiKeyGroup');
-  if (aiConfig.provider === 'openai') {
-    keyField.value = aiConfig.openaiKey || '';
-    keyField.placeholder = 'sk-...';
-    keyGroup.style.display = '';
-  } else if (aiConfig.provider === 'anthropic') {
-    keyField.value = aiConfig.anthropicKey || '';
-    keyField.placeholder = 'sk-ant-...';
-    keyGroup.style.display = '';
-  } else {
-    keyGroup.style.display = 'none';
-  }
-  document.getElementById('aiEndpointGroup').style.display = aiConfig.provider === 'ollama' ? '' : 'none';
+  const modelSel = document.getElementById('aiModel');
+  if ([...modelSel.options].some(o => o.value === aiConfig.model)) modelSel.value = aiConfig.model;
+  document.getElementById('aiApiKey').value = aiConfig.apiKey || '';
   document.getElementById('aiConfigStatus').style.display = 'none';
   openModal('aiSettingsModal');
 }
 
-document.getElementById('aiProvider')?.addEventListener('change', function() {
-  const keyGroup = document.getElementById('aiKeyGroup');
-  const endpointGroup = document.getElementById('aiEndpointGroup');
-  const keyField = document.getElementById('aiApiKey');
-  if (this.value === 'openai') {
-    keyField.placeholder = 'sk-...';
-    keyGroup.style.display = '';
-    endpointGroup.style.display = 'none';
-  } else if (this.value === 'anthropic') {
-    keyField.placeholder = 'sk-ant-...';
-    keyGroup.style.display = '';
-    endpointGroup.style.display = 'none';
-  } else {
-    keyGroup.style.display = 'none';
-    endpointGroup.style.display = '';
-  }
-  document.getElementById('aiConfigStatus').style.display = 'none';
-});
-
 async function saveAIConfig() {
   const config = {
-    provider: document.getElementById('aiProvider').value,
-    model: document.getElementById('aiModel').value.trim(),
-    endpoint: document.getElementById('aiEndpoint').value.trim(),
-    openaiKey: document.getElementById('aiApiKey').value,
-    anthropicKey: document.getElementById('aiApiKey').value,
+    model: document.getElementById('aiModel').value,
+    apiKey: document.getElementById('aiApiKey').value,
   };
   try {
     const res = await api('/ai/config', { method: 'PUT', body: JSON.stringify(config) });
@@ -1406,19 +1360,14 @@ async function testAIConnection() {
   status.style.color = 'var(--primary-light)';
   status.textContent = 'Connexion en cours...';
 
-  const config = {
-    provider: document.getElementById('aiProvider').value,
-    model: document.getElementById('aiModel').value.trim() || 'llama3',
-    endpoint: document.getElementById('aiEndpoint').value.trim(),
-    openaiKey: document.getElementById('aiApiKey').value,
-    anthropicKey: document.getElementById('aiApiKey').value,
-  };
-
   try {
     const res = await fetch(API + '/ai/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
+      body: JSON.stringify({
+        model: document.getElementById('aiModel').value,
+        apiKey: document.getElementById('aiApiKey').value,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur');

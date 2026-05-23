@@ -12,13 +12,7 @@ function loadAIConfig() {
   try {
     return JSON.parse(fs.readFileSync(AI_CONFIG_PATH, 'utf-8'));
   } catch {
-    return {
-      provider: process.env.AI_PROVIDER || 'ollama',
-      model: process.env.AI_MODEL || 'llama3',
-      endpoint: process.env.AI_ENDPOINT || 'http://localhost:11434',
-      openaiKey: process.env.OPENAI_API_KEY || '',
-      anthropicKey: process.env.ANTHROPIC_API_KEY || '',
-    };
+    return { apiKey: process.env.OPENCODE_API_KEY || '', model: 'big-pickle' };
   }
 }
 
@@ -61,41 +55,22 @@ function buildSkillContext(skillId) {
 }
 
 async function callAI(messages, systemPrompt, config) {
-  const { provider, model, endpoint, openaiKey, anthropicKey } = config;
-  if (provider === 'ollama') {
-    const res = await fetch((endpoint || 'http://localhost:11434') + '/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: model || 'llama3',
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
-        stream: false,
-      }),
-    });
-    if (!res.ok) throw new Error('Ollama error: ' + res.statusText);
-    const data = await res.json();
-    return data.message.content;
-  } else if (provider === 'openai') {
-    const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey: openaiKey });
-    const completion = await openai.chat.completions.create({
-      model: model || 'gpt-4o-mini',
+  const { apiKey, model } = config;
+  const res = await fetch('https://opencode.ai/zen/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (apiKey || ''),
+    },
+    body: JSON.stringify({
+      model: model || 'big-pickle',
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
-    });
-    return completion.choices[0].message.content;
-  } else if (provider === 'anthropic') {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-    const msg = await anthropic.messages.create({
-      model: model || 'claude-3-haiku-20240307',
-      system: systemPrompt,
-      messages: messages,
-      max_tokens: 1024,
-    });
-    return msg.content[0].text;
-  } else {
-    throw new Error('Unknown AI provider: ' + provider);
-  }
+      max_tokens: 4096,
+    }),
+  });
+  if (!res.ok) throw new Error('Erreur IA: ' + res.statusText);
+  const data = await res.json();
+  return data.choices[0].message.content;
 }
 
 async function init() {
@@ -285,18 +260,16 @@ Sois concis, pratique, et orienté action. Réponds en français.`;
   app.get('/api/ai/config', (req, res) => {
     const config = loadAIConfig();
     const safe = { ...config };
-    if (safe.openaiKey) safe.openaiKey = safe.openaiKey.slice(0, 8) + '...' + safe.openaiKey.slice(-4);
-    if (safe.anthropicKey) safe.anthropicKey = safe.anthropicKey.slice(0, 8) + '...' + safe.anthropicKey.slice(-4);
+    if (safe.apiKey) safe.apiKey = safe.apiKey.slice(0, 8) + '...' + safe.apiKey.slice(-4);
     res.json(safe);
   });
 
   app.post('/api/ai/test', async (req, res) => {
-    const config = req.body;
     try {
       const content = await callAI(
         [{ role: 'user', content: 'Dis bonjour en 3 mots.' }],
         'Tu es un assistant. Réponds en français.',
-        config
+        req.body
       );
       res.json({ ok: true, content });
     } catch (err) {
@@ -306,18 +279,14 @@ Sois concis, pratique, et orienté action. Réponds en français.`;
 
   app.put('/api/ai/config', (req, res) => {
     const current = loadAIConfig();
-    const { provider, model, endpoint, openaiKey, anthropicKey } = req.body;
+    const { model, apiKey } = req.body;
     const config = {
-      provider: provider || current.provider,
       model: model || current.model,
-      endpoint: endpoint || current.endpoint,
-      openaiKey: openaiKey && openaiKey.includes('...') ? current.openaiKey : (openaiKey || ''),
-      anthropicKey: anthropicKey && anthropicKey.includes('...') ? current.anthropicKey : (anthropicKey || ''),
+      apiKey: apiKey && apiKey.includes('...') ? current.apiKey : (apiKey || ''),
     };
     saveAIConfig(config);
     const safe = { ...config };
-    if (safe.openaiKey) safe.openaiKey = safe.openaiKey.slice(0, 8) + '...' + safe.openaiKey.slice(-4);
-    if (safe.anthropicKey) safe.anthropicKey = safe.anthropicKey.slice(0, 8) + '...' + safe.anthropicKey.slice(-4);
+    if (safe.apiKey) safe.apiKey = safe.apiKey.slice(0, 8) + '...' + safe.apiKey.slice(-4);
     res.json(safe);
   });
 
