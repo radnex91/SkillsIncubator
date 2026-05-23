@@ -6,11 +6,25 @@ const initSqlJs = require('sql.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'data', 'skills.db');
-const AI_PROVIDER = process.env.AI_PROVIDER || 'ollama';
-const AI_MODEL = process.env.AI_MODEL || 'llama3';
-const AI_ENDPOINT = process.env.AI_ENDPOINT || 'http://localhost:11434';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+const AI_CONFIG_PATH = path.join(__dirname, 'data', 'ai-config.json');
+
+function loadAIConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(AI_CONFIG_PATH, 'utf-8'));
+  } catch {
+    return {
+      provider: process.env.AI_PROVIDER || 'ollama',
+      model: process.env.AI_MODEL || 'llama3',
+      endpoint: process.env.AI_ENDPOINT || 'http://localhost:11434',
+      openaiKey: process.env.OPENAI_API_KEY || '',
+      anthropicKey: process.env.ANTHROPIC_API_KEY || '',
+    };
+  }
+}
+
+function saveAIConfig(config) {
+  fs.writeFileSync(AI_CONFIG_PATH, JSON.stringify(config, null, 2));
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -46,13 +60,14 @@ function buildSkillContext(skillId) {
   return s;
 }
 
-async function callAI(messages, systemPrompt) {
-  if (AI_PROVIDER === 'ollama') {
-    const res = await fetch(AI_ENDPOINT + '/api/chat', {
+async function callAI(messages, systemPrompt, config) {
+  const { provider, model, endpoint, openaiKey, anthropicKey } = config;
+  if (provider === 'ollama') {
+    const res = await fetch((endpoint || 'http://localhost:11434') + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: AI_MODEL,
+        model: model || 'llama3',
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
         stream: false,
       }),
@@ -60,26 +75,26 @@ async function callAI(messages, systemPrompt) {
     if (!res.ok) throw new Error('Ollama error: ' + res.statusText);
     const data = await res.json();
     return data.message.content;
-  } else if (AI_PROVIDER === 'openai') {
+  } else if (provider === 'openai') {
     const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+    const openai = new OpenAI({ apiKey: openaiKey });
     const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+      model: model || 'gpt-4o-mini',
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
     });
     return completion.choices[0].message.content;
-  } else if (AI_PROVIDER === 'anthropic') {
+  } else if (provider === 'anthropic') {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const anthropic = new Anthropic({ apiKey: anthropicKey });
     const msg = await anthropic.messages.create({
-      model: AI_MODEL,
+      model: model || 'claude-3-haiku-20240307',
       system: systemPrompt,
       messages: messages,
       max_tokens: 1024,
     });
     return msg.content[0].text;
   } else {
-    throw new Error('Unknown AI provider: ' + AI_PROVIDER);
+    throw new Error('Unknown AI provider: ' + provider);
   }
 }
 
@@ -251,7 +266,8 @@ Contexte du skill :
 ${skill.repo_url ? '- Dépôt : ' + skill.repo_url + '\n' : ''}${skill.notes ? '- Notes : ' + skill.notes + '\n' : ''}${milestoneLines ? '- Jalons :\n' + milestoneLines + '\n' : ''}${recentLogs ? '- Logs récents :\n' + recentLogs : ''}
 Sois concis, pratique, et orienté action. Réponds en français.`;
 
-      const content = await callAI(messages, systemPrompt);
+      const aiConfig = loadAIConfig();
+      const content = await callAI(messages, systemPrompt, aiConfig);
       res.json({ content });
     } catch (err) {
       console.error('Chat error:', err);
@@ -263,6 +279,46 @@ Sois concis, pratique, et orienté action. Réponds en français.`;
     run('DELETE FROM skills WHERE id = ?', [req.params.id]);
     saveDb();
     res.json({ ok: true });
+  });
+
+  // ---- AI Config ----
+  app.get('/api/ai/config', (req, res) => {
+    const config = loadAIConfig();
+    const safe = { ...config };
+    if (safe.openaiKey) safe.openaiKey = safe.openaiKey.slice(0, 8) + '...' + safe.openaiKey.slice(-4);
+    if (safe.anthropicKey) safe.anthropicKey = safe.anthropicKey.slice(0, 8) + '...' + safe.anthropicKey.slice(-4);
+    res.json(safe);
+  });
+
+  app.post('/api/ai/test', async (req, res) => {
+    const config = req.body;
+    try {
+      const content = await callAI(
+        [{ role: 'user', content: 'Dis bonjour en 3 mots.' }],
+        'Tu es un assistant. Réponds en français.',
+        config
+      );
+      res.json({ ok: true, content });
+    } catch (err) {
+      res.status(500).json({ error: err.message || 'Erreur de connexion' });
+    }
+  });
+
+  app.put('/api/ai/config', (req, res) => {
+    const current = loadAIConfig();
+    const { provider, model, endpoint, openaiKey, anthropicKey } = req.body;
+    const config = {
+      provider: provider || current.provider,
+      model: model || current.model,
+      endpoint: endpoint || current.endpoint,
+      openaiKey: openaiKey && openaiKey.includes('...') ? current.openaiKey : (openaiKey || ''),
+      anthropicKey: anthropicKey && anthropicKey.includes('...') ? current.anthropicKey : (anthropicKey || ''),
+    };
+    saveAIConfig(config);
+    const safe = { ...config };
+    if (safe.openaiKey) safe.openaiKey = safe.openaiKey.slice(0, 8) + '...' + safe.openaiKey.slice(-4);
+    if (safe.anthropicKey) safe.anthropicKey = safe.anthropicKey.slice(0, 8) + '...' + safe.anthropicKey.slice(-4);
+    res.json(safe);
   });
 
   // ---- Milestones ----

@@ -1036,6 +1036,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Catégories
       </button>
+      <button class="btn btn-ghost" onclick="openAISettings()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        IA
+      </button>
       <button class="btn btn-primary" onclick="openSkillModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nouveau Skill
@@ -1147,6 +1151,50 @@
       <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
     </div>
     <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aiSettingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuration IA
+      </h2>
+      <button class="modal-close" onclick="closeModal('aiSettingsModal')">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label>Fournisseur IA</label>
+      <select id="aiProvider">
+        <option value="ollama">Ollama (local)</option>
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Modèle</label>
+      <input id="aiModel" placeholder="llama3, gpt-4o-mini, claude-3-haiku...">
+    </div>
+
+    <div class="form-group" id="aiEndpointGroup">
+      <label>Endpoint API</label>
+      <input id="aiEndpoint" placeholder="http://localhost:11434">
+    </div>
+
+    <div class="form-group" id="aiKeyGroup" style="display:none">
+      <label>Clé API</label>
+      <input id="aiApiKey" type="password" placeholder="sk-...">
+    </div>
+
+    <div id="aiConfigStatus" style="font-size:13px;padding:10px 14px;border-radius:10px;margin-bottom:10px;display:none"></div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('aiSettingsModal')">Fermer</button>
+      <button class="btn btn-ghost" id="aiTestBtn" onclick="testAIConnection()">Tester la connexion</button>
+      <button class="btn btn-primary" onclick="saveAIConfig()">Enregistrer</button>
+    </div>
   </div>
 </div>
 
@@ -1279,6 +1327,114 @@ function renderSkills() {
   });
   html += '</div>';
   container.innerHTML = html;
+}
+
+let aiConfig = {};
+
+async function openAISettings() {
+  try {
+    aiConfig = await api('/ai/config');
+  } catch {
+    aiConfig = { provider: 'ollama', model: 'llama3', endpoint: 'http://localhost:11434', openaiKey: '', anthropicKey: '' };
+  }
+  document.getElementById('aiProvider').value = aiConfig.provider || 'ollama';
+  document.getElementById('aiModel').value = aiConfig.model || '';
+  document.getElementById('aiEndpoint').value = aiConfig.endpoint || '';
+  const keyField = document.getElementById('aiApiKey');
+  const keyGroup = document.getElementById('aiKeyGroup');
+  if (aiConfig.provider === 'openai') {
+    keyField.value = aiConfig.openaiKey || '';
+    keyField.placeholder = 'sk-...';
+    keyGroup.style.display = '';
+  } else if (aiConfig.provider === 'anthropic') {
+    keyField.value = aiConfig.anthropicKey || '';
+    keyField.placeholder = 'sk-ant-...';
+    keyGroup.style.display = '';
+  } else {
+    keyGroup.style.display = 'none';
+  }
+  document.getElementById('aiEndpointGroup').style.display = aiConfig.provider === 'ollama' ? '' : 'none';
+  document.getElementById('aiConfigStatus').style.display = 'none';
+  openModal('aiSettingsModal');
+}
+
+document.getElementById('aiProvider')?.addEventListener('change', function() {
+  const keyGroup = document.getElementById('aiKeyGroup');
+  const endpointGroup = document.getElementById('aiEndpointGroup');
+  const keyField = document.getElementById('aiApiKey');
+  if (this.value === 'openai') {
+    keyField.placeholder = 'sk-...';
+    keyGroup.style.display = '';
+    endpointGroup.style.display = 'none';
+  } else if (this.value === 'anthropic') {
+    keyField.placeholder = 'sk-ant-...';
+    keyGroup.style.display = '';
+    endpointGroup.style.display = 'none';
+  } else {
+    keyGroup.style.display = 'none';
+    endpointGroup.style.display = '';
+  }
+  document.getElementById('aiConfigStatus').style.display = 'none';
+});
+
+async function saveAIConfig() {
+  const config = {
+    provider: document.getElementById('aiProvider').value,
+    model: document.getElementById('aiModel').value.trim(),
+    endpoint: document.getElementById('aiEndpoint').value.trim(),
+    openaiKey: document.getElementById('aiApiKey').value,
+    anthropicKey: document.getElementById('aiApiKey').value,
+  };
+  try {
+    const res = await api('/ai/config', { method: 'PUT', body: JSON.stringify(config) });
+    aiConfig = res;
+    toast('Configuration IA enregistrée ✓');
+    closeModal('aiSettingsModal');
+  } catch (err) {
+    toast('Erreur: ' + err.message);
+  }
+}
+
+async function testAIConnection() {
+  const btn = document.getElementById('aiTestBtn');
+  btn.textContent = 'Test en cours...';
+  btn.disabled = true;
+  const status = document.getElementById('aiConfigStatus');
+  status.style.display = '';
+  status.style.background = 'rgba(124,106,240,.1)';
+  status.style.border = '1px solid rgba(124,106,240,.2)';
+  status.style.color = 'var(--primary-light)';
+  status.textContent = 'Connexion en cours...';
+
+  const config = {
+    provider: document.getElementById('aiProvider').value,
+    model: document.getElementById('aiModel').value.trim() || 'llama3',
+    endpoint: document.getElementById('aiEndpoint').value.trim(),
+    openaiKey: document.getElementById('aiApiKey').value,
+    anthropicKey: document.getElementById('aiApiKey').value,
+  };
+
+  try {
+    const res = await fetch(API + '/ai/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+    status.style.background = 'rgba(34,197,94,.1)';
+    status.style.border = '1px solid rgba(34,197,94,.2)';
+    status.style.color = '#4ade80';
+    status.textContent = '✓ Connexion réussie : ' + data.content;
+  } catch (err) {
+    status.style.background = 'rgba(239,68,68,.1)';
+    status.style.border = '1px solid rgba(239,68,68,.2)';
+    status.style.color = '#f87171';
+    status.textContent = '✗ Échec : ' + (err.message || 'Impossible de contacter le service IA');
+  }
+
+  btn.textContent = 'Tester la connexion';
+  btn.disabled = false;
 }
 
 function esc(s) {
